@@ -1,0 +1,13 @@
+MKSHELL=/bin/bash
+
+%.total_variants.tsv:Q: %.rawstats.tmp
+	echo "[DEBUG] extract total counts data only"
+	echo "# Variants in project $(basename $stem.vcf.gz)" > $target
+	grep -e "number of SNPs:" -e "number of indels:" $prereq | cut -f3,4 >> $target \
+	&& rm $stem.*.tmp
+
+%.rawstats.tmp:Q: %.vcf.gz
+	echo "[DEBUG] count raw stats for all samples for $prereq"
+	all_samples=$(bcftools view -h $prereq | tail -n1 | cut -f10- | tr "\t" ",")
+	echo "[...] samples to count are: $all_samples"
+	bcftools stats --samples $all_samples $prereq > $target
