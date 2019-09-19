@@ -1,5 +1,3 @@
-MKSHELL=/bin/bash
-
 %.total_variants.tsv:Q: %.rawstats.tmp
 	echo "[DEBUG] extract total counts data only"
 	echo "# Variants in project $(basename $stem.vcf.gz)" > $target
