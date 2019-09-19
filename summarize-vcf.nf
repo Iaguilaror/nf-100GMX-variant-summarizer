@@ -132,8 +132,9 @@ try {
 /* Check if inpuths were provided
  * if they were not provided, they keep the 'false' value assigned in the parameter initiation block above and this test fails
 */
-if ( !params.vcffile | !params.metadata ) {
-  log.error " Please provide both inputs, the --vcffile and --metadata files \n\n" +
+if ( !file(params.vcffile).exists() | !file(params.metadata).exists() ) {
+  log.error "Input file does not exist\n\n" +
+  "Please provide valid paths for both the --vcffile and --metadata inputs \n\n" +
   "For more information, execute: nextflow run summarize-vcf.nf --help"
   exit 1
 }
@@ -141,7 +142,7 @@ if ( !params.vcffile | !params.metadata ) {
 /*  Check that extension of input 1 is .vcf.gz
  * to understand regexp use, and '==~' see https://www.nextflow.io/docs/latest/script.html#regular-expressions
 */
-if ( ! file(params.vcffile).getName() ==~ /.+\.vcf\.gz$/ ) {
+if ( !(file(params.vcffile).getName() ==~ /.+\.vcf\.gz$/) ) {
 	log.error " --vcffile must have .vcf.gz extension \n\n" +
 	"For more information, execute: nextflow run summarize-vcf.nf --help"
   exit 1
