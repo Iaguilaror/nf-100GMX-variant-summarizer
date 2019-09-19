@@ -129,12 +129,8 @@ try {
 
 /*//////////////////////////////
   INPUT PARAMETER VALIDATION BLOCK
-  TODO (iaguilar) check the extension of input queries; see getExtension() at https://www.nextflow.io/docs/latest/script.html#check-file-attributes
-*/
-
-/* Check if vcffile provided
-    if they were not provided, they keep the 'false' value assigned in the parameter initiation block above
-    and this test fails
+/* Check if inpuths were provided
+ * if they were not provided, they keep the 'false' value assigned in the parameter initiation block above and this test fails
 */
 if ( !params.vcffile | !params.metadata ) {
   log.error " Please provide both inputs, the --vcffile and --metadata files \n\n" +
@@ -142,7 +138,16 @@ if ( !params.vcffile | !params.metadata ) {
   exit 1
 }
 
-/*
+/*  Check that extension of input 1 is .vcf.gz
+ * to understand regexp use, and '==~' see https://www.nextflow.io/docs/latest/script.html#regular-expressions
+*/
+if ( ! file(params.vcffile).getName() ==~ /.+\.vcf\.gz$/ ) {
+	log.error " --vcffile must have .vcf.gz extension \n\n" +
+	"For more information, execute: nextflow run summarize-vcf.nf --help"
+  exit 1
+}
+
+/* ///////////////////////////////////
 Output directory definition
 Default value to create directory is the parent dir of --vcffile
 */
@@ -157,17 +162,6 @@ params.output_dir = file(params.vcffile).getParent()
 */
 results_dir = "${params.output_dir}/${pipeline_name}-results/"
 intermediates_dir = "${params.output_dir}/${pipeline_name}-intermediate/"
-
-/*
-Useful functions definition
-*/
-/* define a function for extracting the file name from a full path
-* The full path will be the one defined by the user to indicate where the reference file is located */
-def get_baseName(f) {
-	/* find where is the last appearance of "/", then extract the string +1 after this last appearance */
-  	f.substring(f.lastIndexOf('/') + 1);
-}
-
 
 /*//////////////////////////////
   LOG RUN INFORMATION
@@ -205,6 +199,16 @@ pipelinesummary['Intermediate Dir']		= intermediates_dir
 /* print stored summary info */
 log.info pipelinesummary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
 log.info "==========================================\nPipeline Start"
+
+/* ///////////////////////////////
+Useful functions definition
+*/
+// /* define a function for extracting the file name from a full path
+// * The full path will be the one defined by the user to indicate where the reference file is located */
+// def get_baseName(f) {
+// 	/* find where is the last appearance of "/", then extract the string +1 after this last appearance */
+//   	f.substring(f.lastIndexOf('/') + 1);
+// }
 
 /*//////////////////////////////
   PIPELINE START
