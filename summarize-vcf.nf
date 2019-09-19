@@ -26,7 +26,7 @@ Authors:
 Pipeline Processes In Brief:
 
 A-general-counts:
-	A1-project-counts
+	A1_project_counts
 
 ================================================================*/
 
@@ -212,5 +212,40 @@ Useful functions definition
 // }
 
 /*//////////////////////////////
-  PIPELINE START
+  PIPELINE START A
+	* branch A : counting total SNVs and indels in vcffile
 */
+
+/*
+	READ INPUTS
+*/
+
+/* Load vcf files and tabix index into channel */
+Channel
+  .fromPath("${params.vcffile}*")
+	.toList()
+  .set{ vcf_inputs_for_A1 }
+
+/* A1_project_counts */
+/* Read mkfile module files */
+Channel
+	.fromPath("${workflow.projectDir}/mkmodules/A-general-counts/mk-project-counts/*")
+	.toList()
+	.set{ mkfiles_A1 }
+
+process A1_project_counts {
+
+	publishDir "${results_dir}/A1_project_counts/",mode:"copy"
+
+	input:
+	file vcf from vcf_inputs_for_A1
+	file mkfiles from mkfiles_A1
+
+	output:
+	file "*.total_variants.tsv"
+
+	"""
+	bash runmk.sh
+	"""
+
+}
