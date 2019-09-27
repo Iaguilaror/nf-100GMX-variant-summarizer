@@ -1,4 +1,4 @@
-%.counts_nofilter.tsv:Q: %.count_block.tmp
+%.counts_worldwidesingletons.tsv:Q: %.count_block.tmp
 	echo "[DEBUG] format results"
 	Rscript --vanilla final-counter.R $prereq $target \
 	&& rm $stem.*.tmp
@@ -8,8 +8,23 @@
 	grep "# PSC.*id.*sample.*nRefHom" $prereq | sed "s#\[[0-9]*\]##g" | cut -f3- > $target \
 	&& grep "^PSC" $prereq | cut -f3- >> $target
 
-%.rawstats.tmp:Q: %.vcf.gz
+%.rawstats.tmp:Q: %.filteredvcf2.tmp
 	echo "[DEBUG] count raw stats for all samples for"
 	all_samples=$(bcftools view -h $prereq | tail -n1 | cut -f10- | tr "\t" ",")
 	echo "[...] samples to count are: $all_samples"
 	bcftools stats --samples $all_samples $prereq > $target
+
+%.filteredvcf2.tmp:Q: %.filteredvcf1.tmp
+	echo "[DEBUG] filter vcf for variants of interest"
+	echo "[DEBUG] removing variants with AF in 1000 genomes or gnomAD WGS data"
+	filter_vep \
+			-i $prereq \
+			-o $target \
+			--vcf_info_field ANN \
+			-filter "not MAX_AF and not gnomADg" \
+			--force_overwrite
+
+%.filteredvcf1.tmp:Q: %.vcf.gz
+	echo "[DEBUG] filter vcf for variants of interest"
+	echo "[DEBUG] selecting singletons"
+	bcftools view --max-ac 1 $prereq > $target

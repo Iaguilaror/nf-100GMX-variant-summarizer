@@ -1,5 +1,3 @@
-MKSHELL=/bin/bash
-
 %.counts_novel.tsv:Q: %.count_block.tmp
 	echo "[DEBUG] format results"
 	Rscript --vanilla final-counter.R $prereq $target \
