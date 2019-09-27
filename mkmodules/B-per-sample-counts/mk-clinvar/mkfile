@@ -16,10 +16,10 @@
 
 %.filteredvcf.tmp:Q: %.vcf.gz
 	echo "[DEBUG] filter vcf for variants of interest"
-	echo "[DEBUG] keeping variants with PGKB annotations"
+	echo "[DEBUG] keeping variants with clinvar pathogenic, likely pathogenic or risk factor annotation"
 	filter_vep \
 			-i $prereq \
 			-o $target \
 			--vcf_info_field ANN \
-			-filter "pharmgkb_drug" \
+			-filter "clinvar_CLNSIG matches Likely_pathogenic or clinvar_CLNSIG matches Pathogenic or clinvar_CLNSIG matches risk_factor" \
 			--force_overwrite
