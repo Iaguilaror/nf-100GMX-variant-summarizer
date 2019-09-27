@@ -1,4 +1,4 @@
-%.counts_pgkb.tsv:Q: %.count_block.tmp
+%.counts_clinvar.tsv:Q: %.count_block.tmp
 	echo "[DEBUG] format results"
 	Rscript --vanilla final-counter.R $prereq $target \
 	&& rm $stem.*.tmp

@@ -3,5 +3,5 @@
 find -L . \
   -type f \
   -name "*.vcf.gz" \
-| sed "s#.vcf.gz#.counts_pgkb.tsv#" \
+| sed "s#.vcf.gz#.counts_clinvar.tsv#" \
 | xargs mk
