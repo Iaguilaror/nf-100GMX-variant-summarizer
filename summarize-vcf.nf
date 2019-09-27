@@ -25,7 +25,7 @@ Authors:
 =============================
 Pipeline Processes In Brief:
 
-A-general-counts:
+branch A : counting total SNVs and indels in vcffile
 	A1_project_counts
 
 ================================================================*/
@@ -249,3 +249,5 @@ process A1_project_counts {
 	"""
 
 }
+
+/*/////////////////// */
