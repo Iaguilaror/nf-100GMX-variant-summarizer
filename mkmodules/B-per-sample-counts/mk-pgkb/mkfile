@@ -1,0 +1,25 @@
+%.counts_pgkb.tsv:Q: %.count_block.tmp
+	echo "[DEBUG] format results"
+	Rscript --vanilla final-counter.R $prereq $target \
+	&& rm $stem.*.tmp
+
+%.count_block.tmp:Q: %.rawstats.tmp
+	echo "[DEBUG] extract block of count data only"
+	grep "# PSC.*id.*sample.*nRefHom" $prereq | sed "s#\[[0-9]*\]##g" | cut -f3- > $target \
+	&& grep "^PSC" $prereq | cut -f3- >> $target
+
+%.rawstats.tmp:Q: %.filteredvcf.tmp
+	echo "[DEBUG] count raw stats for all samples for"
+	all_samples=$(bcftools view -h $prereq | tail -n1 | cut -f10- | tr "\t" ",")
+	echo "[...] samples to count are: $all_samples"
+	bcftools stats --samples $all_samples $prereq > $target
+
+%.filteredvcf.tmp:Q: %.vcf.gz
+	echo "[DEBUG] filter vcf for variants of interest"
+	echo "[DEBUG] removing variants with AF in 1000 genomes or gnomAD WGS data"
+	filter_vep \
+			-i $prereq \
+			-o $target \
+			--vcf_info_field ANN \
+			-filter "pharmgkb_drug" \
+			--force_overwrite
