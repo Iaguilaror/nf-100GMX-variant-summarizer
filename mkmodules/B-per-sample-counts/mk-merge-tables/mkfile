@@ -1,0 +1,4 @@
+%.persample_counts.tsv:Q:
+	prereq_dirname=$(dirname $stem.counts_nofilter.tsv)
+	echo "[DEBUG] merge tables from $prereq_dirname"
+	Rscript --vanilla merger.R $prereq_dirname $target
