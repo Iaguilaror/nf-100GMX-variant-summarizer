@@ -28,6 +28,15 @@ Pipeline Processes In Brief:
 branch A : counting total SNVs and indels in vcffile
 	A1_project_counts
 
+branch B : counting SNVs and indels per sample in vcffile, including novel, worldwide singletons, clinvar, gwascat and pharmgkb
+	B1a_nofilter_counts
+	B1b_novel_counts
+	B1c_worldwide_singletons_counts
+	B1d_clinvar_counts
+	B1e_gwascatalog_counts
+	B1f_pgkb_counts
+	B2_merge_tables
+
 ================================================================*/
 
 /* Define the help message as a function to call when needed *//////////////////////////////
@@ -250,4 +259,192 @@ process A1_project_counts {
 
 }
 
-/*/////////////////// */
+/*//////////////////////////////
+  PIPELINE START A
+	* branch B : counting SNVs and indels per sample in vcffile,
+	* including novel, worldwide singletons, clinvar, gwascat and pharmgkb
+*/
+
+/*
+	READ INPUTS
+*/
+
+/* Load vcf files and tabix index into channel */
+Channel
+  .fromPath("${params.vcffile}*")
+	.toList()
+  .into{ vcf_inputs_for_B1a; vcf_inputs_for_B1b; vcf_inputs_for_B1c; vcf_inputs_for_B1d; vcf_inputs_for_B1e; vcf_inputs_for_B1f }
+
+/* B1a_nofilter_counts */
+/* Read mkfile module files */
+Channel
+	.fromPath("${workflow.projectDir}/mkmodules/B-per-sample-counts/mk-no-filter/*")
+	.toList()
+	.set{ mkfiles_B1a }
+
+process B1a_nofilter_counts {
+
+	publishDir "${intermediates_dir}/B1a_nofilter_counts/",mode:"symlink"
+
+	input:
+	file vcf from vcf_inputs_for_B1a
+	file mkfiles from mkfiles_B1a
+
+	output:
+	file "*.tsv" into results_from_B1a
+
+	"""
+	bash runmk.sh
+	"""
+
+}
+
+/* B1b_novel_counts */
+/* Read mkfile module files */
+Channel
+	.fromPath("${workflow.projectDir}/mkmodules/B-per-sample-counts/mk-novel/*")
+	.toList()
+	.set{ mkfiles_B1b }
+
+process B1b_novel_counts {
+
+	publishDir "${intermediates_dir}/B1b_novel_counts/",mode:"symlink"
+
+	input:
+	file vcf from vcf_inputs_for_B1b
+	file mkfiles from mkfiles_B1b
+
+	output:
+	file "*.tsv" into results_from_B1b
+
+	"""
+	bash runmk.sh
+	"""
+
+}
+
+/* B1c_worldwide_singletons_counts */
+/* Read mkfile module files */
+Channel
+	.fromPath("${workflow.projectDir}/mkmodules/B-per-sample-counts/mk-worldwide-singletons/*")
+	.toList()
+	.set{ mkfiles_B1c }
+
+process B1c_worldwide_singletons_counts {
+
+	publishDir "${intermediates_dir}/B1c_worldwide_singletons_counts/",mode:"symlink"
+
+	input:
+	file vcf from vcf_inputs_for_B1c
+	file mkfiles from mkfiles_B1c
+
+	output:
+	file "*.tsv" into results_from_B1c
+
+	"""
+	bash runmk.sh
+	"""
+
+}
+
+/* B1d_clinvar_counts */
+/* Read mkfile module files */
+Channel
+	.fromPath("${workflow.projectDir}/mkmodules/B-per-sample-counts/mk-clinvar/*")
+	.toList()
+	.set{ mkfiles_B1d }
+
+process B1d_clinvar_counts {
+
+	publishDir "${intermediates_dir}/B1d_clinvar_counts/",mode:"symlink"
+
+	input:
+	file vcf from vcf_inputs_for_B1d
+	file mkfiles from mkfiles_B1d
+
+	output:
+	file "*.tsv" into results_from_B1d
+
+	"""
+	bash runmk.sh
+	"""
+
+}
+
+/* B1e_gwascatalog_counts */
+/* Read mkfile module files */
+Channel
+	.fromPath("${workflow.projectDir}/mkmodules/B-per-sample-counts/mk-gwascatalog/*")
+	.toList()
+	.set{ mkfiles_B1e }
+
+process B1e_gwascatalog_counts {
+
+	publishDir "${intermediates_dir}/B1e_gwascatalog_counts/",mode:"symlink"
+
+	input:
+	file vcf from vcf_inputs_for_B1e
+	file mkfiles from mkfiles_B1e
+
+	output:
+	file "*.tsv" into results_from_B1e
+
+	"""
+	bash runmk.sh
+	"""
+
+}
+
+/* B1f_pgkb_counts */
+/* Read mkfile module files */
+Channel
+	.fromPath("${workflow.projectDir}/mkmodules/B-per-sample-counts/mk-pgkb/*")
+	.toList()
+	.set{ mkfiles_B1f }
+
+process B1f_pgkb_counts {
+
+	publishDir "${intermediates_dir}/B1f_pgkb_counts/",mode:"symlink"
+
+	input:
+	file vcf from vcf_inputs_for_B1f
+	file mkfiles from mkfiles_B1f
+
+	output:
+	file "*.tsv" into results_from_B1f
+
+	"""
+	bash runmk.sh
+	"""
+
+}
+
+/* B2_merge_tables */
+/* gather every B1* results */
+results_from_B1a
+	.mix(results_from_B1b,results_from_B1c,results_from_B1d,results_from_B1e,results_from_B1f)
+	.toList()
+	.set{ inputs_for_B2 }
+
+/* Read mkfile module files */
+Channel
+	.fromPath("${workflow.projectDir}/mkmodules/B-per-sample-counts/mk-merge-tables/*")
+	.toList()
+	.set{ mkfiles_B2 }
+
+process B2_merge_tables {
+
+	publishDir "${results_dir}/B2_merge_tables/",mode:"copy"
+
+	input:
+	file tables from inputs_for_B2
+	file mkfiles from mkfiles_B2
+
+	output:
+	file "*.tsv"
+
+	"""
+	bash runmk.sh
+	"""
+
+}
