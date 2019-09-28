@@ -1,0 +1,20 @@
+MKSHELL=/bin/bash
+
+private_variants_per_group.pdf:Q: private_variants_per_group.tsv
+	echo "[DEBUG] plotting data"
+	Rscript --vanilla plotter.R
+
+private_variants_per_group.tsv:Q:
+	echo "[DEBUG] counting and gathering variant counts"
+	echo "group variant_type number" | tr " " "\t" > $target
+	for vcffile in $(find -L . -name "group_*.vcf")
+	do
+		echo "[>..] counting $vcffile"
+		group=$(basename $vcffile .vcf | sed "s#group_##")
+		variant_type="snv"
+		numbers=$(bcftools view -H --types snps $vcffile | wc -l)
+		echo "$group $variant_type $numbers" | tr " " "\t" >> $target
+		variant_type="indel"
+		numbers=$(bcftools view -H --types indels $vcffile | wc -l)
+		echo "$group $variant_type $numbers" | tr " " "\t" >> $target
+	done

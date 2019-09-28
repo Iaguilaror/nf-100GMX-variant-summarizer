@@ -1,0 +1,10 @@
+MKSHELL=/bin/bash
+
+%.world_rare.vcf:Q: %.vcf.gz
+	echo "[DEBUG] selecting singletons"
+	filter_vep \
+		-i $prereq \
+		-o $target \
+		--vcf_info_field ANN \
+		-filter "(MAX_AF < 0.005 and gnomADg_AF < 0.005) or (MAX_AF < 0.005 and not gnomADg_AF) or (not MAX_AF and gnomADg_AF < 0.005) or (not MAX_AF and not gnomADg_AF)" \
+		--force_overwrite

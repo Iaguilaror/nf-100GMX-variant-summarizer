@@ -1,0 +1,18 @@
+MKSHELL=/bin/bash
+
+%.PREPARE_GROUPS:QV: %.sample_count.tmp
+	echo "[DEBUG] preparing samples, with at least $NUMBER_OF_SAMPLES_CUTOFF samples"
+	for group in $( awk -v cutoff="$NUMBER_OF_SAMPLES_CUTOFF" '$1 >= cutoff {print $2}' $prereq )
+	do
+		ofile="$(dirname $stem)/group_$group.tsv"
+		echo "output file is $ofile"
+		awk -v ethnic="$group" '$2 == ethnic {print $1}' $stem.tsv \
+		| tr "\n" "," | sed "s#,\$##" > $ofile
+	done \
+	&& rm $prereq
+
+%.sample_count.tmp:Q: %.tsv
+	echo "[DEBUG] count samples per group"
+	tail -n+2 $prereq \
+	| cut -f2 | sort | uniq -c \
+	| tr -s " " | sed "s# ##" | sort -nr > $target

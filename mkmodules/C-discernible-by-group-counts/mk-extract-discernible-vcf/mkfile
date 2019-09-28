@@ -1,0 +1,29 @@
+MKSHELL=/bin/bash
+
+%.vcf:Q: %.vcf.in_samples.tmp %.vcf.NOT_in_samples.tmp
+	echo "[DEBUG] extracting exclusive VCF for $prereq "
+	bcftools isec -p $stem.tmp $stem.vcf.in_samples.tmp $stem.vcf.NOT_in_samples.tmp \
+	&& mv $stem.tmp/0000.vcf $target \
+	&& rm -r $stem*tmp*
+
+%.vcf.in_samples.tmp:Q: %.tsv $VCF_REFERENCE
+	echo "[DEBUG] extracting variants in samples from $prereq"
+	bcftools view \
+		--samples $(head $stem.tsv) \
+		--min-ac 1 \
+		--min-af $GROUP_MIN_AF \
+	$VCF_REFERENCE \
+	| bcftools annotate --remove "INFO/ANN,INFO/DP,INFO/AF" \
+	| bgzip > $target \
+	&& tabix -p vcf $target
+
+%.vcf.NOT_in_samples.tmp:Q: %.tsv $VCF_REFERENCE
+	echo "[DEBUG] extracting variants in samples OTHER THAN $prereq"
+	bcftools view \
+		--samples ^$(head $stem.tsv) \
+		--min-ac 1 \
+		--min-af $NOT_IN_GROUP_MIN_AF \
+	$VCF_REFERENCE \
+	| bcftools annotate --remove "INFO/ANN,INFO/DP,INFO/AF" \
+	| bgzip > $target \
+	&& tabix -p vcf $target
