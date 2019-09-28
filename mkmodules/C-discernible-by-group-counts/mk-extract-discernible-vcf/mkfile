@@ -22,7 +22,7 @@ MKSHELL=/bin/bash
 	bcftools view \
 		--samples ^$(head $stem.tsv) \
 		--min-ac 1 \
-		--min-af $NOT_IN_GROUP_MIN_AF \
+		--min-af $OUTGROUP_MAX_AF \
 	$VCF_REFERENCE \
 	| bcftools annotate --remove "INFO/ANN,INFO/DP,INFO/AF" \
 	| bgzip > $target \

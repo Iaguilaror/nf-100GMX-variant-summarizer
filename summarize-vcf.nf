@@ -37,6 +37,12 @@ branch B : counting SNVs and indels per sample in vcffile, including novel, worl
 	B1f_pgkb_counts
 	B2_merge_tables
 
+branch C : counting SNVs and indels discernible by sample groups
+	C1a_define_groups
+	C1b_select_world_rare
+	C2_extract_discernible_vcf
+	C3_count_and_plot
+
 ================================================================*/
 
 /* Define the help message as a function to call when needed *//////////////////////////////
@@ -50,7 +56,7 @@ def helpMessage() {
 
 	Usage:
 
-  nextflow run summarize-vcf.nf --vcffile <path to input 1> --metadata <path to input 2> [--output_dir path to results ]
+  nextflow run summarize-vcf.nf --vcffile <path to input 1> --metadata <path to input 2> --nsamples <integer> --group_minaf <numeric> --outgroup_maxaf <numeric> [--output_dir path to results ]
 
 	  --vcffile    <- compressed vcf file for annotation;
 				vcf file must be annotated with the expanded annotation pipeline from Morett lab;
@@ -59,6 +65,16 @@ def helpMessage() {
 	  --metadata	<- tsv file with sample - group relationship;
 				tsv file must contain 2 columns: 1 = sample , 2 = group ;
 				tsv file must have a header;
+	  --nsamples	<- min number of samples to define a group for discernible variant counting;
+				default: 4;
+				must be a positive integer number;
+				groups with fewer samples than 'nsamples' will not have their discernible variants counted;
+	  --group_minaf	<- min allele frequency to define each in-group high frequency variants, as fraction;
+				default: 0.5;
+				must be a numeric value between 0 (min) and 1 (max);
+	  --outgroup_maxaf	<- max allele frequency in samples other than each group to define out-group low frequency variants, as fraction;
+				default: 0.05;
+				must be a numeric value between 0 (min) and 1 (max);
 	  --output_dir     <- directory where results, intermediate and log files will be stored;
 				default: same dir where --vcffile resides;
 	  -resume	   <- Use cached results if the executed project has been run before;
@@ -92,6 +108,9 @@ pipeline_name = "VCFsummarizer"
 */
 params.vcffile = false  //if no input path 1 is provided, value is false to provoke the error during the parameter validation block
 params.metadata = false  //if no input path 2 is provided, value is false to provoke the error during the parameter validation block
+params.nsamples = 4
+params.group_minaf = 0.5
+params.outgroup_maxaf = 0.05
 params.help = false //default is false to not trigger help message automatically at every run
 params.version = false //default is false to not trigger version message automatically at every run
 
@@ -157,6 +176,26 @@ if ( !(file(params.vcffile).getName() ==~ /.+\.vcf\.gz$/) ) {
   exit 1
 }
 
+/*  Check that '--nsamples' is a positive integer */
+if ( params.nsamples <= 0 ) {
+	log.error " --nsamples must be a positive integer \n\n" +
+	"For more information, execute: nextflow run summarize-vcf.nf --help"
+  exit 1
+}
+
+/*  Check that '--group_minaf' and '--outgroup_maxaf' is a value between 0 - 1 */
+if ( params.group_minaf < 0 | params.group_minaf > 1 ) {
+	log.error " --group_minaf must be a higher than 0 and max 1 \n\n" +
+	"For more information, execute: nextflow run summarize-vcf.nf --help"
+  exit 1
+}
+
+if ( params.outgroup_maxaf < 0 | params.outgroup_maxaf > 1 ) {
+	log.error " --outgroup_maxaf must be a higher than 0 and max 1 \n\n" +
+	"For more information, execute: nextflow run summarize-vcf.nf --help"
+  exit 1
+}
+
 /* ///////////////////////////////////
 Output directory definition
 Default value to create directory is the parent dir of --vcffile
@@ -204,6 +243,9 @@ def pipelinesummary = [:]
 /* log parameter values being used into summary */
 pipelinesummary['VCF file']			= params.vcffile
 pipelinesummary['METADATA file']			= params.metadata
+pipelinesummary['nsamples']			= params.nsamples
+pipelinesummary['group minaf']			= params.group_minaf
+pipelinesummary['outgroup maxaf']			= params.outgroup_maxaf
 pipelinesummary['Results Dir']		= results_dir
 pipelinesummary['Intermediate Dir']		= intermediates_dir
 /* print stored summary info */
@@ -260,7 +302,7 @@ process A1_project_counts {
 }
 
 /*//////////////////////////////
-  PIPELINE START A
+  PIPELINE START B
 	* branch B : counting SNVs and indels per sample in vcffile,
 	* including novel, worldwide singletons, clinvar, gwascat and pharmgkb
 */
@@ -445,6 +487,137 @@ process B2_merge_tables {
 
 	"""
 	bash runmk.sh
+	"""
+
+}
+
+/*//////////////////////////////
+  PIPELINE START C
+	* branch C : counting SNVs and indels discernible by sample groups
+*/
+
+/*
+	READ INPUTS
+*/
+
+/* Load tsv file with metadata for linking samples and groups */
+Channel
+  .fromPath("${params.metadata}*")
+	.toList()
+  .set{ metadata_input_for_C1a }
+
+/* C1a_define_groups */
+/* Read mkfile module files */
+Channel
+	.fromPath("${workflow.projectDir}/mkmodules/C-discernible-by-group-counts/mk-define-groups/*")
+	.toList()
+	.set{ mkfiles_C1a }
+
+process C1a_define_groups {
+
+	publishDir "${intermediates_dir}/C1a_define_groups/",mode:"symlink"
+
+	input:
+	file tsv from metadata_input_for_C1a
+	file mkfiles from mkfiles_C1a
+
+	output:
+	file "group_*.tsv" into results_C1a mode flatten
+
+	"""
+  export NUMBER_OF_SAMPLES_CUTOFF="${params.nsamples}"
+	bash runmk.sh
+	"""
+
+}
+
+/* Load vcf files and tabix index into channel */
+Channel
+  .fromPath("${params.vcffile}*")
+	.toList()
+  .set{ vcf_inputs_for_C1b }
+
+/* C1b_select_world_rare */
+/* Read mkfile module files */
+Channel
+	.fromPath("${workflow.projectDir}/mkmodules/C-discernible-by-group-counts/mk-select-world-rare/*")
+	.toList()
+	.set{ mkfiles_C1b }
+
+process C1b_select_world_rare {
+
+	publishDir "${intermediates_dir}/C1b_select_world_rare/",mode:"symlink"
+
+	input:
+	file vcf from vcf_inputs_for_C1b
+	file mkfiles from mkfiles_C1b
+
+	output:
+	file "*.world_rare.vcf" into results_C1b_select_world_rare
+
+	"""
+	bash runmk.sh
+	"""
+
+}
+
+/* pair every group_*.tsv with the *.world_rare.vcf variants */
+results_C1a
+  .combine(results_C1b_select_world_rare)
+  .set{ inputs_for_C2 }
+
+/* C2_extract_discernible_vcf */
+/* Read mkfile module files */
+Channel
+	.fromPath("${workflow.projectDir}/mkmodules/C-discernible-by-group-counts/mk-extract-discernible-vcf/*")
+	.toList()
+	.set{ mkfiles_C2 }
+
+process C2_extract_discernible_vcf {
+
+	publishDir "${intermediates_dir}/C2_extract_discernible_vcf/",mode:"symlink"
+
+	input:
+	file sample from inputs_for_C2
+	file mk_files from mkfiles_C2
+
+	output:
+	file "group_*.vcf" into results_C2_extract_discernible_vcf
+
+	"""
+  export VCF_REFERENCE="\$(ls *.vcf)"
+  export GROUP_MIN_AF="${params.group_minaf}"
+  export OUTGROUP_MAX_AF="${params.outgroup_maxaf}"
+  bash runmk.sh
+	"""
+
+}
+
+/* gather every group vcf */
+results_C2_extract_discernible_vcf
+  .toList()
+  .set{ inputs_for_C3 }
+
+/* C3_count_and_plot */
+/* Read mkfile module files */
+Channel
+	.fromPath("${workflow.projectDir}/mkmodules/C-discernible-by-group-counts/mk-count-and-plot/*")
+	.toList()
+	.set{ mkfiles_C3 }
+
+process C3_count_and_plot {
+
+	publishDir "${results_dir}/C3_count_and_plot/",mode:"copy"
+
+	input:
+	file sample from inputs_for_C3
+	file mk_files from mkfiles_C3
+
+	output:
+	file "*"
+
+	"""
+  bash runmk.sh
 	"""
 
 }

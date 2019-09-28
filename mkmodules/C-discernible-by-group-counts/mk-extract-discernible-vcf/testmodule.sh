@@ -7,7 +7,7 @@ export VCF_REFERENCE="test/reference/sample.world_rare.vcf"
 ## The resulting VCF will contain variants that were found in at least GROUP_MIN_AF of the target group,
 #^ and less than NOT_IN_GROUP_MIN_AF of the rest of the 100G-MX samples
 export GROUP_MIN_AF="0.1"
-export NOT_IN_GROUP_MIN_AF="0.01"
+export OUTGROUP_MAX_AF="0.01"
 ###
 
 echo "[>..] test running this module with data in test/data"
