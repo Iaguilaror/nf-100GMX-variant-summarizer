@@ -139,7 +139,7 @@ Seri indel 0
 ---
 
 #### References
-Under the hood nf-vcf-table-description separates variants from different dabatases and uses some coding tools, please include the following ciations in your work:
+Under the hood nf-100GMX-variant-summarizer uses some coding tools, please include the following ciations in your work:
 
 * McLaren, W., Gil, L., Hunt, S. E., Riat, H. S., Ritchie, G. R., Thormann, A., ... & Cunningham, F. (2016). The ensembl variant effect predictor. Genome biology, 17(1), 122.
 * Narasimhan, V., Danecek, P., Scally, A., Xue, Y., Tyler-Smith, C., & Durbin, R. (2016). BCFtools/RoH: a hidden Markov model approach for detecting autozygosity from next-generation sequencing data. Bioinformatics, 32(11), 1749-1751.
