@@ -1,7 +1,10 @@
 ### mk-extract-discernible-vcf ###
 # mkfile script with dependency rules for:
-# 1. Count samples per group.
-# 2. Join in a file samples per group.
+# 1. Extract variants in other samples.
+# 2. Extract variantes in local samples.
+# 3. Extract exclusive variants.
+#The resulting VCF will contain variants that were found in at least GROUP_MIN_AF of the target group,
+# and less than NOT_IN_GROUP_MIN_AF of the rest of the 100G-MX samples
 ## For more information about 'mk' dependency control, see https://9fans.github.io/plan9port/man/man1/mk.html
 
 ## Define shell command line which will be used to run scripts.

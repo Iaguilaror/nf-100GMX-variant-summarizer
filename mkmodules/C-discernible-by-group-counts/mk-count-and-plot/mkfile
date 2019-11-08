@@ -1,7 +1,7 @@
 ### mk-count-and-plot ###
 # mkfile script with dependency rules for:
-# 1. To filter variants harbored in ClinVar.
-# 2. Give the total counts data
+# 1. To count number of discernible variants per group and type in a tsv file.
+# 2. To plot number of discernible variants per group and type.
 ## For more information about 'mk' dependency control, see https://9fans.github.io/plan9port/man/man1/mk.html
 MKSHELL=/bin/bash
 

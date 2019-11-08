@@ -1,7 +1,6 @@
 ### mk-select-world-rare ###
 # mkfile script with dependency rules for:
-# 1. Count samples per group.
-# 2. Join in a file samples per group.
+# 1. Filter variants according AF in gnomAD populations and NatMex.
 ## For more information about 'mk' dependency control, see https://9fans.github.io/plan9port/man/man1/mk.html
 
 ## Define shell command line which will be used to run scripts.
@@ -12,7 +11,7 @@ MKSHELL=/bin/bash
 	# -i, input file
 	# -o, output file
 	# --vcf_info_field, VEP finds annotations in ANN field
-	# -filter, VEP finds selection signals.
+	# -filter, VEP finds variants that satisfy AF values.
 	# --force_overwrite, forces an ouput file
 	echo "[DEBUG] selecting singletons"
 	filter_vep \
