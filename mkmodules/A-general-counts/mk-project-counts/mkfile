@@ -1,3 +1,15 @@
+### mk-project-counts ###
+# mkfile script with dependency rules for:
+# 1. To count samples and raw stats for all samples.
+# 2. To give the total counts data.
+## For more information about 'mk' dependency control, see https://9fans.github.io/plan9port/man/man1/mk.html
+
+## Define shell command line which will be used to run scripts.
+MKSHELL=/bin/bash
+
+## Use bcftools to manipulate variants in the compressed Variant Call Format (VCF) (input).
+## For more information about 'bcftools' commands, see https://samtools.github.io/bcftools/bcftools.html
+## For more information about the VCF format, please go to the next link: https://www.internationalgenome.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-40/
 %.total_variants.tsv:Q: %.rawstats.tmp
 	echo "[DEBUG] extract total counts data only"
 	echo "# Variants in project $(basename $stem.vcf.gz)" > $target
@@ -7,5 +19,6 @@
 %.rawstats.tmp:Q: %.vcf.gz
 	echo "[DEBUG] count raw stats for all samples for $prereq"
 	all_samples=$(bcftools view -h $prereq | tail -n1 | cut -f10- | tr "\t" ",")
+	## stats --samples pritns stats of all samples
 	echo "[...] samples to count are: $all_samples"
 	bcftools stats --samples $all_samples $prereq > $target

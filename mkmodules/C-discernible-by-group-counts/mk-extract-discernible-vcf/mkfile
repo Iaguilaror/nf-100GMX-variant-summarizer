@@ -1,12 +1,22 @@
+### mk-extract-discernible-vcf ###
+# mkfile script with dependency rules for:
+# 1. Count samples per group.
+# 2. Join in a file samples per group.
+## For more information about 'mk' dependency control, see https://9fans.github.io/plan9port/man/man1/mk.html
+
+## Define shell command line which will be used to run scripts.
 MKSHELL=/bin/bash
 
 %.vcf:Q: %.vcf.in_samples.tmp %.vcf.NOT_in_samples.tmp
+	# isec -p compares vcfs
 	echo "[DEBUG] extracting exclusive VCF for $prereq "
 	bcftools isec -p $stem.tmp $stem.vcf.in_samples.tmp $stem.vcf.NOT_in_samples.tmp \
 	&& mv $stem.tmp/0000.vcf $target \
 	&& rm -r $stem*tmp*
 
 %.vcf.in_samples.tmp:Q: %.tsv $VCF_REFERENCE
+	# view, keeps samples with min af, min ac assigned
+	# annotate --remove simplifies vcf
 	echo "[DEBUG] extracting variants in samples from $prereq"
 	bcftools view \
 		--samples $(head $stem.tsv) \
@@ -18,6 +28,10 @@ MKSHELL=/bin/bash
 	&& tabix -p vcf $target
 
 %.vcf.NOT_in_samples.tmp:Q: %.tsv $VCF_REFERENCE
+	## For more information about the VCF format, please go to the next link: https://www.internationalgenome.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-40/
+	## For more information about 'bcftools' commands, see https://samtools.github.io/bcftools/bcftools.html
+	# view, keeps samples with min af, min ac assigned
+	# annotate --remove simplifies vcf
 	echo "[DEBUG] extracting variants in samples OTHER THAN $prereq"
 	bcftools view \
 		--samples ^$(head $stem.tsv) \

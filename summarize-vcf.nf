@@ -18,9 +18,11 @@ Authors:
 
 - Bioinformatics Development
  Israel Aguilar-Ordonez (iaguilaror@gmail.com)
+ Judith Ballesteros-Villascán (judith.vballesteros@gmail.com)
 
 - Nextflow Port
  Israel Aguilar-Ordonez (iaguilaror@gmail.com)
+ Judith Ballesteros-Villascán (judith.vballesteros@gmail.com)
 
 =============================
 Pipeline Processes In Brief:

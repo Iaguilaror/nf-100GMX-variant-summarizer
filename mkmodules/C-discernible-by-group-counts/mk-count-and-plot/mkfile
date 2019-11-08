@@ -1,6 +1,12 @@
+### mk-count-and-plot ###
+# mkfile script with dependency rules for:
+# 1. To filter variants harbored in ClinVar.
+# 2. Give the total counts data
+## For more information about 'mk' dependency control, see https://9fans.github.io/plan9port/man/man1/mk.html
 MKSHELL=/bin/bash
 
 private_variants_per_group.pdf:Q: private_variants_per_group.tsv
+	# This block of code uses plotter.R to format results.
 	echo "[DEBUG] plotting data"
 	Rscript --vanilla plotter.R
 
@@ -10,6 +16,8 @@ private_variants_per_group.tsv:Q:
 	for vcffile in $(find -L . -name "group_*.vcf")
 	do
 		echo "[>..] counting $vcffile"
+		## For more information about 'bcftools' commands, see https://samtools.github.io/bcftools/bcftools.html
+		## view --types indels/snps to keep the specific type of variant.
 		group=$(basename $vcffile .vcf | sed "s#group_##")
 		variant_type="snv"
 		numbers=$(bcftools view -H --types snps $vcffile | wc -l)

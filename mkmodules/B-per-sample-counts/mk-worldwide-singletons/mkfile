@@ -1,4 +1,15 @@
+### mk-worldwide-singletons ###
+# mkfile script with dependency rules for:
+# 1. To filter variants that are singletons.
+# 2. To keep variants that have not frequencies in another population.
+## For more information about 'mk' dependency control, see https://9fans.github.io/plan9port/man/man1/mk.html
+## For more information about GWAS Catalog, see https://www.ebi.ac.uk/gwas/
+
+## Define shell command line which will be used to run scripts.
+MKSHELL=/bin/bash
+
 %.counts_worldwidesingletons.tsv:Q: %.count_block.tmp
+	# This block of code uses final-counter.R to format results.
 	echo "[DEBUG] format results"
 	Rscript --vanilla final-counter.R $prereq $target \
 	&& rm $stem.*.tmp
@@ -12,10 +23,17 @@
 	echo "[DEBUG] count raw stats for all samples for"
 	all_samples=$(bcftools view -h $prereq | tail -n1 | cut -f10- | tr "\t" ",")
 	echo "[...] samples to count are: $all_samples"
+	## stats --samples pritns stats of all samples
 	bcftools stats --samples $all_samples $prereq > $target
 
 %.filteredvcf2.tmp:Q: %.filteredvcf1.tmp
 	echo "[DEBUG] filter vcf for variants of interest"
+	## Filter vep is a VEP tool described here: https://www.ensembl.org/info/docs/tools/vep/script/vep_filter.html
+	# -i, input file
+	# -o, output file
+	# --vcf_info_field, VEP finds annotations in ANN field
+	# -filter, VEP finds variants where "not MAX_AF and not gnomADg" is true
+	# --force_overwrite, forces an ouput file
 	echo "[DEBUG] removing variants with AF in 1000 genomes or gnomAD WGS data"
 	filter_vep \
 			-i $prereq \
@@ -25,6 +43,9 @@
 			--force_overwrite
 
 %.filteredvcf1.tmp:Q: %.vcf.gz
+	## For more information about 'bcftools' commands, see https://samtools.github.io/bcftools/bcftools.html
+	## For more information about the VCF format, please go to the next link: https://www.internationalgenome.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-40/
 	echo "[DEBUG] filter vcf for variants of interest"
+	# view --max-ac 1 keeps only variants that are sigletons AC=1
 	echo "[DEBUG] selecting singletons"
 	bcftools view --max-ac 1 $prereq > $target

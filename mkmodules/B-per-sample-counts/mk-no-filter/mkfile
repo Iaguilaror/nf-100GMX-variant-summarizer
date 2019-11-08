@@ -1,4 +1,15 @@
+### mk-no-filter ###
+# mkfile script with dependency rules for:
+# 1. To filter variants that are not in ClinVar, GWAS Catalog or PGKB.
+# 2. Give the total counts data.
+## For more information about 'mk' dependency control, see https://9fans.github.io/plan9port/man/man1/mk.html
+## For more information about GWAS Catalog, see https://www.ebi.ac.uk/gwas/
+
+## Define shell command line which will be used to run scripts.
+MKSHELL=/bin/bash
+
 %.counts_nofilter.tsv:Q: %.count_block.tmp
+	# This block of code uses final-counter.R to format results.
 	echo "[DEBUG] format results"
 	Rscript --vanilla final-counter.R $prereq $target \
 	&& rm $stem.*.tmp
@@ -9,7 +20,10 @@
 	&& grep "^PSC" $prereq | cut -f3- >> $target
 
 %.rawstats.tmp:Q: %.vcf.gz
+	## For more information about 'bcftools' commands, see https://samtools.github.io/bcftools/bcftools.html
+	## For more information about the VCF format, please go to the next link: https://www.internationalgenome.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-40/
 	echo "[DEBUG] count raw stats for all samples for"
 	all_samples=$(bcftools view -h $prereq | tail -n1 | cut -f10- | tr "\t" ",")
 	echo "[...] samples to count are: $all_samples"
+	## stats --samples pritns stats of all samples
 	bcftools stats --samples $all_samples $prereq > $target

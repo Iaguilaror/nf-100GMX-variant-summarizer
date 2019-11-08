@@ -1,4 +1,13 @@
+### mk-merge-tables ###
+# mkfile script with dependency rules for:
+# 1. To merge tables of counted data.
+## For more information about 'mk' dependency control, see https://9fans.github.io/plan9port/man/man1/mk.html
+
+## Define shell command line which will be used to run scripts.
+MKSHELL=/bin/bash
+
 %.persample_counts.tsv:Q:
+	# This block of code uses merger.R to format results.
 	prereq_dirname=$(dirname $stem.counts_nofilter.tsv)
 	echo "[DEBUG] merge tables from $prereq_dirname"
 	Rscript --vanilla merger.R $prereq_dirname $target
