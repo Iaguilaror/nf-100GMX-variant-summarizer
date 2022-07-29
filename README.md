@@ -153,3 +153,8 @@ If you have questions, requests, or bugs to report, please email
 
 #### Dev Team
 Israel Aguilar-Ordonez <iaguilaror@gmail.com>   
+
+### Cite us
+If you find this pipeline useful for your project, please cite us as:
+
+Aguilar-Ordoñez, Israel, et al. "Whole genome variation in 27 Mexican indigenous populations, demographic and biomedical insights." PloS one 16.4 (2021): e0249773.
